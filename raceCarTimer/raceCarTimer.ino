@@ -1,11 +1,10 @@
 #include <LiquidCrystal.h>
 
-const int clockInt = 0;            // digital pin 2 is now interrupt 0
+// digital pin 2 is interrupt 0 - make sure to have pin 2 (which is the interrupt) connected to pin 3 (which is the clock)
+const int clockInt = 0;
 
 //the pin that transmits the clock wave
 const int wavePin = 3;
-
-const int resetPin = 9;
 
 //how many times the click should tick each secon (millisecond resolution)
 const int clockSpeed = 1000;
@@ -42,8 +41,6 @@ void setup()
   //is read by the interrupt above
   tone(wavePin, clockSpeed);
   
-  pinMode(resetPin, INPUT);
-
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   resetRace();  
@@ -55,9 +52,14 @@ void setup()
   }
 }
 
+/*
+* Sets status, timers and all that to the 'ready to race' state
+* A break in the light source should then start the actual race
+*/
 void readyForRace()
 {
   writeTextInLine("Hold steady!", 0);
+  resetTime();
   printCurrentTime();
   detachInterrupt(clockInt);
   delay(3000);     
@@ -67,18 +69,29 @@ void readyForRace()
   raceStatus = RACE_READY;  
 }
 
+/*
+* Sets status, timers and all that to the initial state - when not even a light-source is pointed
+* at the sensor
+*/
 void resetRace(){
   raceStatus = BEFORE_RACE;
   writeTextInLine("Set up race", 0);
   printCurrentTime();
 }
 
+/*
+* Resets all time keeping variables
+*/
 void resetTime(){
   minutes = 0;
   seconds = 0;
   milliSeconds = 0;
 }
 
+/*
+* Clears the line 'lineNumber'
+* And then fills it with the 'text'
+*/
 void writeTextInLine(String text, int lineNumber)
 {
   clearLcdLine(lineNumber);
@@ -86,6 +99,9 @@ void writeTextInLine(String text, int lineNumber)
   lcd.print(text);
 }
 
+/*
+* Fills the line 'lineNumber' in the LCD with spaces
+*/
 void clearLcdLine(int lineNumber){
   lcd.setCursor(0, lineNumber);
   lcd.print("                ");
@@ -93,8 +109,10 @@ void clearLcdLine(int lineNumber){
 
 
 /*
-* Here is where all the main time-keeping is coming from
-* is called on each interrupt - that means "called each 'clockSpeed times' a second"
+* Here is where all the main time-keeping is coming from and basically the 'main method' that is responsible
+* for printing out time and keeping the status of the current race etc.
+* 
+* It is called on each interrupt - that means "called each 'clockSpeed times' a second"
 */
 void clockCounter() 
 { 
@@ -147,6 +165,9 @@ void clockCounter()
   }
 }
 
+/*
+* Prints the current clock time to serial as well as the LCD (on the second line)
+*/
 void printCurrentTime()
 {
   Serial.print("Clock at:");
@@ -163,18 +184,14 @@ void printCurrentTime()
   lcd.print("ms ");
 }
 
+/*
+* Convenience method for reading the light sensor
+*/
 int getLightReading() 
 {
   return analogRead(photoPin);
 }
 
-/*
-* Initializes the race
-*/
-void setupRaceCondition()
-{
-  
-}
 
 void loop() 
 {  
